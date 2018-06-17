@@ -18,6 +18,7 @@
   <a href="#" onclick="loadEVSEControl()"><nobr><b><span class="glyphicon glyphicon-road"></span>&nbsp;&nbsp;EVSE&nbsp;Control</b></nobr></a>
   <a href="#" onclick="loadUsers()"><nobr><span class="glyphicon glyphicon-user"></span>&nbsp;&nbsp;Users</nobr></a>
   <a href="#" onclick="loadSettings()"><nobr><span class="glyphicon glyphicon-cog"></span>&nbsp;&nbsp;Settings</nobr></a>
+  <a href="#" onclick="loadCloud()"><nobr><span class="glyphicon glyphicon-cloud"></span>&nbsp;&nbsp;Cloud</nobr></a>
   <a href="#" onclick="loadLog()"><nobr><span class="glyphicon glyphicon-list-alt"></span>&nbsp;&nbsp;Log</nobr></a>
 </div>
 <!-- Current Modal -->
@@ -140,7 +141,7 @@
               <tr  style="transition:0.3s">
                 <th><span class="glyphicon glyphicon-signal"></span>&nbsp;&nbsp;Power</th>
                 <td id="evse_current" class="text-right"></td>
-			  </tr>
+			        </tr>
               <tr  style="transition:0.3s">
                 <th><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;Duration</th>
                 <td id="evse_charging_time" class="text-right"></td>
@@ -153,7 +154,7 @@
                 <th><span class="glyphicon glyphicon-road"></span>&nbsp;&nbsp;Charged mileage</th>
                 <td id="evse_charged_mileage" class="text-right"></td>
               </tr>
-			  </tbody>
+			       </tbody>
           </table>
         </div>
 		<div class="hidden" id="evseNotActive" align=center>
@@ -247,7 +248,90 @@
             <h6 class="text-muted"><a href="https://github.com/CurtRod/SimpleEVSE-WiFi" target="_blank">SimpleEVSE WiFi</a></h6>
          </footer>
       </div>
-	  
+<!-- Cloud Container -->
+      <div class="container" id="cloudContent" style="display: none">
+        <div class="header clearfix">
+          <nav>
+        	   <ul class="nav pull-right" style="padding:10px">
+        		 <span class="text-muted" style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
+        		</ul>
+        	</nav>
+        	<h3 class="text-muted">Cloud</h3>
+        </div>
+        <div class="alert alert-warning"><strong>Warning!</strong> Settings will take effect when the device is rebooted.
+        </div>
+        <div class="row">
+          <div class="col-sm-6">
+            <legend>MQTT Settings</legend>
+            <br>
+            <div class="row form-group">
+              <label data-toggle="tooltip" title="When you want to use MQTT to transmit the status figures, please activate this option." class="col-xs-3">MQTT-Transmission</label>
+              <div class="col-xs-9">
+                <form>
+                  <label class="checkbox-inline"><input type="checkbox" id="MQTTactive" value="" name="MQTTmode" onclick="handleMQTT();">Active</label>
+                </form>
+              </div>
+            </div>
+            <div class="row form-group required">
+              <label data-toggle="tooltip" title="MQTT Server" class="col-xs-3">MQTT Server</label>
+              <span class="col-xs-6 col-md-5">
+                <input id="mqttserver" class="form-control input-sm" value="v22018025715660757.nicesrv.de" type="text" name="mptt_server">
+              </span>
+            </div>
+            <div class="row form-group required">
+              <label data-toggle="tooltip" title="MQTT Port" class="col-xs-3">MQTT Port</label>
+              <span class="col-xs-6 col-md-5">
+                <input id="mqttport" class="form-control input-sm" value="1883" type="text" name="mptt_port">
+              </span>
+            </div>
+            <div class="row form-group required">
+              <label data-toggle="tooltip" title="MQTT Client ID" class="col-xs-3">MQTT Client ID</label>
+              <span class="col-xs-6 col-md-5">
+                <input id="mqttclientid" class="form-control input-sm" type="text" name="mptt_clientid">
+              </span>
+            </div>
+            <div class="row form-group required">
+              <label data-toggle="tooltip" title="MQTT User" class="col-xs-3">MQTT User</label>
+              <span class="col-xs-9 col-md-5">
+                <input id="mqttuser" class="form-control input-sm" placeholder="MQTT User"  type="text" name="mqtt_user">
+              </span>
+            </div>
+            <div class="row form-group required">
+              <label data-toggle="tooltip" title="MQTT Password" class="col-xs-3">MQTT Password</label>
+              <span class="col-xs-6 col-md-5">
+                <input id="mqttpw" class="form-control input-sm" type="password" name="mptt_pw">
+              </span>
+              <span class="col-xs-3">
+                <button id="shmqttpw" type="button" class="btn btn-primary btn-xs" onclick="shmqttpw()">show</button>
+              </span>
+            </div>
+            <div>
+              <button onclick="saveCloud()" class="btn btn-primary btn-sm pull-right">Save & Reboot</button>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <legend>Goingelectric CF Settings</legend>
+            <br>
+            <div class="row form-group">
+              <label data-toggle="tooltip" title="When you are a member of the Goingelectric Croudfunding, please activate this option." class="col-xs-3">CF Member</label>
+              <div class="col-xs-9">
+                <form>
+                  <label class="checkbox-inline"><input type="checkbox" id="CFMember" value="" name="CFmode" onclick="handleCFMember();">Active</label>
+                </form>
+              </div>
+              <div class="row form-group required">
+                <label data-toggle="tooltip" title="CF Charging Point ID" class="col-xs-3">CF Charging Point ID</label>
+                <span class="col-xs-6 col-md-5">
+                  <input id="CFchargepoint_id" class="form-control input-sm" type="text" name="cfchargepoint_id">
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="footer">
+          <h6 class="text-muted"><a href="https://github.com/CurtRod/SimpleEVSE-WiFi" target="_blank">SimpleEVSE WiFi</a></h6>
+        </footer>
+      </div>
 <!-- Log Container -->
         <div class="container" id="logContent" style="display: none">
 		<div class="header clearfix">
@@ -273,7 +357,7 @@
 		</nav>
 		<h3 class="text-muted">Settings</h3>
 		</div>
-        <div class="alert alert-warning"><strong>Warning!</strong> Settings will take effect when the device is rebooted. 
+        <div class="alert alert-warning"><strong>Warning!</strong> Settings will take effect when the device is rebooted.
         </div>
         <div>
           <button data-toggle="collapse" data-target="#status" id="refstat" onclick="refreshStats()" class="btn btn-link btn-sm">Show Device Status</button>
@@ -317,7 +401,7 @@
                   </tr>
                   				<tr>
  					<th>Free SPIFFS</th>
- 					<td>			
+ 					<td>
  					<div class='progress' style="margin-bottom: 0 !important;">
  						<div id="spiffs" class="progress-bar progress-bar-primary" role="progressbar">
  							Progress
@@ -385,7 +469,7 @@
                     <th>1004: Turn off bit</th>
                     <td id="amps_turn_off"></td>
                   </tr>
-				  <tr>
+				          <tr>
                     <th>1005: Firmware Version</th>
                     <td id="evse_version"></td>
                   </tr>
@@ -397,11 +481,11 @@
                     <th>2000: Current after boot</th>
                     <td id="amps_boot"></td>
                   </tr>
-				  <tr>
+				          <tr>
                     <th>2001: Modbus Status</th>
                     <td id="evse_modbus"></td>
                   </tr>
-				  <tr>
+				          <tr>
                     <th>2002: Min. Current Value</th>
                     <td id="amps_min"></td>
                   </tr>
@@ -421,7 +505,7 @@
                     <th>2006: Current Sharing Mode</th>
                     <td id="evse_sharing_mode"></td>
                   </tr>
-				  <tr>
+				          <tr>
                     <th>2007: PP-Detection</th>
                     <td id="pp_detection"></td>
                   </tr>
@@ -444,7 +528,7 @@
               </div>
             </div>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="Wi-Fi Network's Name" class="col-xs-3">SSID</label> 
+              <label data-toggle="tooltip" title="Wi-Fi Network's Name" class="col-xs-3">SSID</label>
               <span class="col-xs-6 col-md-5">
                 <input class="form-control input-sm" id="inputtohide" type="text" name="ap_ssid">
                 <select class="form-control input-sm" style="display:none;" id="ssid" onchange="listBSSID();"></select>
@@ -454,16 +538,16 @@
               </span>
             </div>
             <div class="row form-group" style="display:none" id="hideBSSID">
-              <label data-toggle="tooltip" title="If you have two Wi-Fi networks with the same SSID you may want to choose the specific one by BSSID" class="col-xs-3">BSSID</label> 
+              <label data-toggle="tooltip" title="If you have two Wi-Fi networks with the same SSID you may want to choose the specific one by BSSID" class="col-xs-3">BSSID</label>
               <span class="col-xs-9 col-md-5">
               <input id="wifibssid" class="form-control input-sm" type="text" name="ap_bssid">
-              </span> 
+              </span>
             </div>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="WiFi Password - in AP mode at least 8 characters!" class="col-xs-3">Password</label> 
+              <label data-toggle="tooltip" title="WiFi Password - in AP mode at least 8 characters!" class="col-xs-3">Password</label>
               <span class="col-xs-6 col-md-5">
               <input id="wifipass" class="form-control input-sm" type="password" name="ap_passwd">
-              </span> 
+              </span>
 			  <span class="col-xs-3">
                 <button id="shwifi" type="button" class="btn btn-primary btn-xs" onclick="shWifi()">show</button>
               </span>
@@ -483,7 +567,7 @@
               </div>
             </div>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="Choose which ESP port is connected to RFID Hardware SDA pin" class="col-xs-3">SPI SS</label> 
+              <label data-toggle="tooltip" title="Choose which ESP port is connected to RFID Hardware SDA pin" class="col-xs-3">SPI SS</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="gpioss">
                   <option value="0">GPIO-0</option>
@@ -496,7 +580,7 @@
               </span>
             </div>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="Higher value means the longer RFID reader's reading distance" class="col-xs-3">Antenna Gain</label> 
+              <label data-toggle="tooltip" title="Higher value means the longer RFID reader's reading distance" class="col-xs-3">Antenna Gain</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="gain">
                   <option value="112">Max (48 db)</option>
@@ -523,7 +607,7 @@
               </div>
             </div>
 			<div class="row form-group">
-              <label data-toggle="tooltip" title="Choose which ESP port is connected to S0 interface of electricity meter" class="col-xs-3">Meter GPIO</label> 
+              <label data-toggle="tooltip" title="Choose which ESP port is connected to S0 interface of electricity meter" class="col-xs-3">Meter GPIO</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="gpioint">
                   <option value="0">GPIO-0</option>
@@ -536,19 +620,19 @@
               </span>
             </div>
             <div class="row form-group">
- 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulses per kWh (usually 1000 or 2000 imp/kWh)" class="col-xs-3">Meter Type</label> 
+ 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulses per kWh (usually 1000 or 2000 imp/kWh)" class="col-xs-3">Meter Type</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="1000" placeholder="in impulses per kWh" id="impkwh" type="text" name="impsperkwh">
  						</span>
 			</div>
 			<div class="row form-group">
- 						<label data-toggle="tooltip" title="Price per kWh in cent" class="col-xs-3">Price</label> 
+ 						<label data-toggle="tooltip" title="Price per kWh in cent" class="col-xs-3">Price</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="25" placeholder="in cent per kWh" id="price" type="text" name="price">
  						</span>
 			</div>
 			<div class="row form-group">
- 						<label data-toggle="tooltip" title="Specify a factor with which the measured energy is to be multiplied (e.g. when using a single-phase meter in combination with a two- or three-phase charging vehicle). Use '1' if you don't need a factor." class="col-xs-3">Factor</label> 
+ 						<label data-toggle="tooltip" title="Specify a factor with which the measured energy is to be multiplied (e.g. when using a single-phase meter in combination with a two- or three-phase charging vehicle). Use '1' if you don't need a factor." class="col-xs-3">Factor</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="1" placeholder="multiplication factor" id="factor" type="text" name="factor">
  						</span>
@@ -558,7 +642,7 @@
 		  <div class="col-sm-6">
 			<legend>EVSE Settings</legend>
             <div class="row form-group">
- 						<label data-toggle="tooltip" title="Enter the maximum current (A) allowed by your electical installation." class="col-xs-3">Max Current</label> 
+ 						<label data-toggle="tooltip" title="Enter the maximum current (A) allowed by your electical installation." class="col-xs-3">Max Current</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="6" placeholder="in A" id="maxinstall" type="text" name="maxinstall">
  						</span>
@@ -572,7 +656,7 @@
               </div>
             </div>
 			<div class="row form-group">
-              <label data-toggle="tooltip" title="Choose which ESP port is connected to Button for activating/deactivating your EVSE" class="col-xs-3">Button Pin</label> 
+              <label data-toggle="tooltip" title="Choose which ESP port is connected to Button for activating/deactivating your EVSE" class="col-xs-3">Button Pin</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="gpiobutton">
                   <option value="0">GPIO-0</option>
@@ -590,7 +674,7 @@
 		<div class="col-sm-6">
             <legend>Car Settings</legend>
            <div class="row form-group">
-              <label data-toggle="tooltip" title="Average energy consumption of your car" class="col-xs-3">Average consumption</label> 
+              <label data-toggle="tooltip" title="Average energy consumption of your car" class="col-xs-3">Average consumption</label>
               <span class="col-xs-6 col-md-5">
               <input class="form-control input-sm" placeholder="in kWh per 100km" id="avgconsumption" type="text">
               </span>
@@ -604,7 +688,7 @@
           <div class="col-sm-6">
             <legend>General Settings</legend>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="Log On password for the Administrator" class="col-xs-3">Admin Password</label> 
+              <label data-toggle="tooltip" title="Log On password for the Administrator" class="col-xs-3">Admin Password</label>
               <span class="col-xs-6 col-md-5">
               <input class="form-control input-sm" placeholder="Administrator Password" id="adminpwd" type="password">
               </span>
@@ -614,7 +698,7 @@
               <br>
             </div>
             <div class="row form-group">
-              <label data-toggle="tooltip" title="Hostname for your ESP, When Bonjour is installed on your computer you can access your ESP via http://hostname.local" class="col-xs-3">Host Name</label> 
+              <label data-toggle="tooltip" title="Hostname for your ESP, When Bonjour is installed on your computer you can access your ESP via http://hostname.local" class="col-xs-3">Host Name</label>
               <span class="col-xs-9 col-md-5">
               <input class="form-control input-sm" placeholder="Hostname" value="evse-wifi" id="hostname" type="text">
               </span>
@@ -625,12 +709,12 @@
             <legend>Time Settings</legend>
             <h6 class="text-muted">Small differences between device time and local time can be ignored.</h6>
             <div class="row form-group">
-              <label class="col-xs-3">Device Time</label> 
+              <label class="col-xs-3">Device Time</label>
               <span id="utc" class="col-xs-9 col-md-5">
               </span>
             </div>
             <div class="row form-group">
-              <label class="col-xs-3">Browser Time</label> 
+              <label class="col-xs-3">Browser Time</label>
               <span id="rtc" class="col-xs-9 col-md-5">
               </span>
             </div>
@@ -638,7 +722,7 @@
               <div data-toggle="tooltip" title="Send your PC/Phone time to ESP, useful when the ESP does not have Internet connection." class="col-xs-3"><button onclick="syncBrowserTime(false)" class="btn btn-link btn-sm">Sync Browser Time to Device</button></div>
               </div>
             <div class="row form-group">
-              <label class="col-xs-3">Time Zone</label> 
+              <label class="col-xs-3">Time Zone</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" name="DropDownTimezone" id="DropDownTimezone">
                   <option value="-12">(GMT -12:00) Eniwetok, Kwajalein</option>
@@ -680,7 +764,7 @@
         </div>
         <hr>
         <div>
-          <button onclick="saveConf()" class="btn btn-primary btn-sm pull-right">Save & Reboot</button> 
+          <button onclick="saveConf()" class="btn btn-primary btn-sm pull-right">Save & Reboot</button>
         </div>
         <br><br><br>
       <div class="jumbotron">

@@ -12,6 +12,13 @@ var page = 1;
 var haspages;
 var usertable = false;
 
+//Cloud
+var mqtt_server = "";
+var mqtt_port = 1883;
+var mqtt_user = "";
+var mqtt_pw = "";
+var mqtt_clientid = "";
+
 //Log
 var logdata;
 var logtable = false;
@@ -33,6 +40,7 @@ function loadEVSEControl() {
 	document.getElementById("evseContent").style.display = "block";
 	document.getElementById("usersContent").style.display = "none";
 	document.getElementById("settingsContent").style.display = "none";
+  document.getElementById("cloudContent").style.display = "none";
 	document.getElementById("logContent").style.display = "none";
 	document.getElementById("loginContent").style.display = "none";
 	closeNav();
@@ -51,7 +59,7 @@ function listEVSEData(obj) {
 		$("#evseNotActive").addClass('hidden');
 		$("#evseActive").removeClass('hidden');
 	}
-	
+
 	if (obj.evse_vehicle_state === 0){	//modbus error
 		$("#carStatusDetected").addClass('hidden');
 		$("#carStatusCharging").addClass('hidden');
@@ -115,7 +123,7 @@ function getTimeFormat(millisec) {
         minutes = minutes - (hours * 60);
         minutes = (minutes >= 10) ? minutes : "0" + minutes;
     }
-	
+
 	seconds = Math.floor(seconds % 60);
     seconds = (seconds >= 10) ? seconds : "0" + seconds;
     if (hours != "") {
@@ -135,9 +143,10 @@ function loadUsers(){
 	document.getElementById("evseContent").style.display = "none";
 	document.getElementById("usersContent").style.display = "block";
 	document.getElementById("settingsContent").style.display = "none";
+  document.getElementById("cloudContent").style.display = "none";
 	document.getElementById("logContent").style.display = "none";
 	closeNav();
-	
+
 	userdata = [];
     var commandtosend = {};
     websock.send("{\"command\":\"userlist\", \"page\":" + page + "}");
@@ -207,7 +216,7 @@ function initUserTable() {
               "parser": function(value) {
                   var vuepoch = new Date(value * 1000);
                   var formatted = vuepoch.getFullYear()
-                        + '-' + twoDigits(vuepoch.getMonth() + 1) 
+                        + '-' + twoDigits(vuepoch.getMonth() + 1)
                         + '-' + twoDigits(vuepoch.getDate());
                   return formatted;
             },
@@ -370,14 +379,88 @@ FooTable.MyFiltering = FooTable.Filtering.extend({
   }
 });
 
+//Script for Cloud
+function loadCloud(){
+  document.getElementById("evseContent").style.display = "none";
+	document.getElementById("usersContent").style.display = "none";
+	document.getElementById("settingsContent").style.display = "none";
+  document.getElementById("cloudContent").style.display = "block";
+	document.getElementById("logContent").style.display = "none";
+	document.getElementById("loading-img").style.display = "block";
+	closeNav();
+
+  var commandtosend = {};
+  commandtosend.command = "getcloud";
+  websock.send(JSON.stringify(commandtosend));
+
+  websock.send("{\"command\":\"getcloud\"}");
+	handleMQTT();
+  document.getElementById("loading-img").style.display = "none";
+}
+
+function shmqttpw(){
+  var x = document.getElementById("mqttpw");
+  if (x.type === "password"){
+  	x.type = "text";
+  	document.getElementById("shmqttpw").innerHTML = "hide";
+  } else {
+  	x.type = "password";
+  	document.getElementById("shmqttpw").innerHTML = "show";
+  }
+}
+
+function handleMQTT() {
+  if (document.getElementById("MQTTactive").checked === true)
+  {
+  		document.getElementById("mqtt_server").disabled = false;
+  		document.getElementById("mqtt_port").disabled = false;
+      document.getElementById("mqtt_clientid").disabled = false;
+      document.getElementById("mqtt_user").disabled = false;
+      document.getElementById("mqtt_pw").disabled = false;
+      document.getElementById("CFchargepoint_id").disabled = false;
+  } else {
+  		document.getElementById("mqtt_server").disabled = true;
+  		document.getElementById("mqtt_port").disabled = true;
+      document.getElementById("mqtt_clientid").disabled = true;
+      document.getElementById("mqtt_user").disabled = true;
+      document.getElementById("mqtt_pw").disabled = true;
+      document.getElementById("CFchargepoint_id").disabled = true;
+  }
+}
+
+function saveCloud() {
+  var a = document.getElementById("mqtt_pw").value;
+  if (a === null || a === "") {
+    alert("MQTT Password cannot be empty");
+    return;
+  }
+  var datatosend = {};
+  document.getElementById("loading-img").style.display = "block";
+  datatosend.command = "cloudfile";
+
+  datatosend.mqtt_server = document.getElementById("mqtt_server").value;
+  datatosend.mqtt_port = document.getElementById("mqtt_port").value;
+  datatosend.mqtt_clientid = document.getElementById("mqtt_clientid").value;
+  datatosend.mqtt_user = document.getElementById("mqtt_user").value;
+  datatosend.mqtt_pw = document.getElementById("mqtt_pw").value;
+  datatosend.MQTTactive = document.getElementById("MQTTactive").checked;
+  datatosend.CFchargepoint_id = document.getElementById("CFchargepoint_id").value;
+
+  websock.send(JSON.stringify(datatosend));
+  document.getElementById("loading-img").style.display = "none";
+  alert("Device now should reboot with new settings");
+  location.reload();
+}
+
 //Functions for Log
 function loadLog() {
 	document.getElementById("evseContent").style.display = "none";
 	document.getElementById("usersContent").style.display = "none";
 	document.getElementById("settingsContent").style.display = "none";
+  document.getElementById("cloudContent").style.display = "none";
 	document.getElementById("logContent").style.display = "block";
 	closeNav();
-	
+
     var commandtosend = {};
     commandtosend.command = "latestlog";
     websock.send(JSON.stringify(commandtosend));
@@ -397,7 +480,7 @@ function initLogTable() {
             "parser": function(value) {
               var vuepoch = new Date(value * 1000);
               var formatted = twoDigits(vuepoch.getUTCDate())
-                  + "." + twoDigits(vuepoch.getUTCMonth() + 1) 
+                  + "." + twoDigits(vuepoch.getUTCMonth() + 1)
                   + "." + twoDigits(vuepoch.getUTCFullYear())
                   + " " + twoDigits(vuepoch.getUTCHours())
                   + ":" + twoDigits(vuepoch.getUTCMinutes())
@@ -475,12 +558,13 @@ function loadSettings() {
 	document.getElementById("evseContent").style.display = "none";
 	document.getElementById("usersContent").style.display = "none";
 	document.getElementById("settingsContent").style.display = "block";
+  document.getElementById("cloudContent").style.display = "none";
 	document.getElementById("logContent").style.display = "none";
 	closeNav();
-	
+
 	websock.send("{\"command\":\"getconf\"}");
 	handleRFID();
-	handleMeter(); 
+	handleMeter();
 }
 function listCONF(obj) {
   document.getElementById("inputtohide").value = obj.ssid;
@@ -514,22 +598,22 @@ function listCONF(obj) {
   document.getElementById("maxinstall").value = obj.maxinstall;
   document.getElementById("avgconsumption").value = obj.avgconsumption;
   document.getElementById("checkboxButtonActive").checked = obj.buttonactive;
-  
+
   if (typeof obj.avgconsumption !== "undefined"){
 	  document.getElementById("avgconsumption").value = obj.avgconsumption;
   }
   else{
 	  document.getElementById("avgconsumption").value = "15.5";
   }
-  
-  
+
+
   if (typeof obj.factor !== "undefined"){
 	  document.getElementById("factor").value = obj.factor;
   }
   else {
 	  document.getElementById("factor").value = "1";
   }
-  
+
   handleButtonActive();
 }
 
@@ -589,7 +673,7 @@ function handleRFID() {
 	}
 	else {
 		document.getElementById("gain").disabled = true;
-		document.getElementById("gpioss").disabled = true;	
+		document.getElementById("gpioss").disabled = true;
 	}
 }
 
@@ -601,7 +685,7 @@ function handleMeter(){
 	}
 	else {
 		document.getElementById("gpioint").disabled = true;
-		document.getElementById("impkwh").disabled = true;	
+		document.getElementById("impkwh").disabled = true;
 		document.getElementById("price").disabled = true;
 	}
 }
@@ -676,7 +760,7 @@ function saveConf() {
 	alert("Administrator Password must be at least 8 characters");
 	return;
   }
-  
+
   var ssid;
   if (document.getElementById("inputtohide").style.display === "none") {
     var b = document.getElementById("ssid");
@@ -699,7 +783,7 @@ function saveConf() {
   else {
     datatosend.bssid = document.getElementById("wifibssid").value;
   }
- 
+
   datatosend.ssid = ssid;
   datatosend.wmode = wmode;
   datatosend.pswd = document.getElementById("wifipass").value;
@@ -957,21 +1041,21 @@ function socketMessageListener(evt) {
   }
   else if (obj.command === "ssidlist") {
     listSSID(obj);
-  } 
+  }
   else if (obj.command === "configfile") {
     listCONF(obj);
     websock.send("{\"command\":\"gettime\"}");
-  } 
+  }
   else if (obj.command === "userlist") {
 	haspages = obj.haspages;
 	builduserdata(obj);
-  } 
+  }
   else if (obj.command === "status") {
     listStats(obj);
   }
   if (obj.type === "latestlog") {
 	logdata = obj.list;
-	for(i in logdata){ 
+	for(i in logdata){
 	if(logdata[i].price === "e"){
 		logdata[i].costs = "<span class=\"glyphicon glyphicon-remove\"></span>";
 		}
@@ -1017,17 +1101,17 @@ function login() {
 }
 
 function wsConnect(){
-	var protocol = "ws://"; 
+	var protocol = "ws://";
 	if (window.location.protocol === "https:") {
 		protocol = "wss://";
 	}
-	
-	wsUri =protocol+ window.location.hostname + "/ws"; 
+
+	wsUri =protocol+ window.location.hostname + "/ws";
 	websock = new WebSocket(wsUri);
 	websock.addEventListener('message', socketMessageListener);
 	websock.addEventListener('error', socketErrorListener);
 	websock.addEventListener('close', socketCloseListener);
-	
+
 	websock.onopen = function(evt) {
 		loadEVSEControl();
 	};
@@ -1037,5 +1121,6 @@ function start() {
 	document.getElementById("evseContent").style.display = "none";
 	document.getElementById("usersContent").style.display = "none";
 	document.getElementById("settingsContent").style.display = "none";
+  document.getElementById("cloudContent").style.display = "none";
 	document.getElementById("logContent").style.display = "none";
 }

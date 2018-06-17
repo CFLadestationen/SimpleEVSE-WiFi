@@ -9,7 +9,7 @@
   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE. 
+  THE SOFTWARE.
 */
 
 #include <ESP8266WiFi.h>              // Whole thing is about using Wi-Fi networks
@@ -24,8 +24,9 @@
 #include <TimeLib.h>                  // Library for converting epochtime to a date
 #include <WiFiUdp.h>                  // Library for manipulating UDP packets which is used by NTP Client to get Timestamps
 #include <SoftwareSerial.h>           // Using GPIOs for Serial Modbus communication
-#include <ModbusMaster.h>
-#include <ESP8266Ping.h>
+#include <ModbusMaster.h>             // Enable comunication with SimpleEVSE register minimum rel. 8
+#include <PubSubClient.h>             // Enable MQTT Service
+#include <ESP8266Ping.h>              // Needed to keep the conectivity alive during idle.
 
 #include "src/proto.h"
 #include "src/ntp.h"
@@ -106,6 +107,7 @@ uint16_t evseBootFirmware;   //Register 2009
 //Settings
 bool useRFID = false;
 bool useMeter = false;
+bool useMQTT = false;
 bool useButton = false;
 bool inAPMode = false;
 bool inFallbackMode = false;
@@ -117,10 +119,19 @@ uint8_t buttonPin;
 char * adminpass = NULL;
 int timeZone;
 
+// RFID Card instance
 MFRC522 mfrc522 = MFRC522();  // Create MFRC522 RFID instance
+
+// Web Server instance
 AsyncWebServer server(80);    // Create AsyncWebServer instance on port "80"
 AsyncWebSocket ws("/ws");     // Create WebSocket instance on URL "/ws"
+
+// NTP instance
 NtpClient NTP;
+
+// MQTT instance
+WiFiClient CFOnineMQTTClient;
+PubSubClient client(CFOnineMQTTClient);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///////       Auxiliary Functions
@@ -142,7 +153,7 @@ void ICACHE_FLASH_ATTR parseBytes(const char* str, char sep, byte* bytes, int ma
 }
 
 void ICACHE_RAM_ATTR handleMeterInt() {  //interrupt routine for metering
-  if(meterImpMillis < millis()){   //Meter impulse is 30ms 
+  if(meterImpMillis < millis()){   //Meter impulse is 30ms
     meterInterrupt = true;
     meterImpMillis = millis();
   }
@@ -208,7 +219,7 @@ void ICACHE_FLASH_ATTR rfidloop() {
     f.readBytes(buf.get(), size);
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.parseObject(buf.get());
-    
+
     if (json.success()) {
       String username = json["user"];
       AccType = json["acctype"];
@@ -236,7 +247,7 @@ void ICACHE_FLASH_ATTR rfidloop() {
       }
       lastUsername = username;
       lastUID = uid;
-      
+
       //inform administrator portal
       DynamicJsonBuffer jsonBuffer2;
       JsonObject& root = jsonBuffer2.createObject();
@@ -265,7 +276,7 @@ void ICACHE_FLASH_ATTR rfidloop() {
   else { // Unknown PICC
     lastUsername = "Unknown";
     lastUID = uid;
-    
+
     Serial.println(" = unknown PICC");
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -334,7 +345,7 @@ void ICACHE_FLASH_ATTR sendStatus() {
   node.clearTransmitBuffer();
   node.clearResponseBuffer();
   result = node.readHoldingRegisters(0x07D0, 10);  // read 10 registers starting at 0x07D0 (2000)
-  
+
   if (result != 0){
     // error occured
     evseVehicleStatus = 0;
@@ -361,7 +372,7 @@ void ICACHE_FLASH_ATTR sendStatus() {
       case 2:
         evseAmpsMin = node.getResponseBuffer(i);           //Register 2002
         break;
-      case 3: 
+      case 3:
         evseAnIn = node.getResponseBuffer(i);             //Reg 2003
         break;
       case 4:
@@ -378,7 +389,7 @@ void ICACHE_FLASH_ATTR sendStatus() {
         break;
       case 9:
         evseBootFirmware = node.getResponseBuffer(i);       //Register 2009
-        break;    
+        break;
       }
     }
   }
@@ -398,7 +409,7 @@ void ICACHE_FLASH_ATTR sendStatus() {
   root["evse_2005"] = evseReg2005;                  //Reg 2005
   root["evse_sharing_mode"] = evseShareMode;        //Reg 2006
   root["evse_pp_detection"] = evsePpDetection;      //Reg 2007
-  
+
   size_t len = root.measureLength();
   AsyncWebSocketMessageBuffer * buffer = ws.makeBuffer(len); //  creates a buffer (len + 1) for you.
   if (buffer) {
@@ -446,7 +457,7 @@ void ICACHE_FLASH_ATTR logLatest(String uid, String username) {
     JsonArray& list = root.createNestedArray("list");
     root.printTo(logFile);
     logFile.close();
-    
+
     logFile = SPIFFS.open("/latestlog.json", "r");
   }
   if (logFile) {
@@ -460,10 +471,10 @@ void ICACHE_FLASH_ATTR logLatest(String uid, String username) {
       Serial.println("Impossible to read JSON file");
     }
     else {
-      logFile.close(); 
+      logFile.close();
       if ( list.size() >= 1000 ) {
         list.remove(0);
-      } 
+      }
       File logFile = SPIFFS.open("/latestlog.json", "w");
       DynamicJsonBuffer jsonBuffer5;
       JsonObject& item = jsonBuffer5.createObject();
@@ -499,7 +510,7 @@ File logFile = SPIFFS.open("/latestlog.json", "r");
     const char* uid = list[(list.size()-1)]["uid"];
     const char* username = list[(list.size()-1)]["username"];
     long timestamp = (long)list[(list.size()-1)]["timestamp"];
-    
+
     list.remove(list.size() - 1); // delete newest log
     File logFile = SPIFFS.open("/latestlog.json", "w");
     DynamicJsonBuffer jsonBuffer7;
@@ -529,11 +540,11 @@ File logFile = SPIFFS.open("/latestlog.json", "r");
 bool ICACHE_FLASH_ATTR queryEVSE(){
   //New ModBus Master Library
   uint8_t result;
-  
+
   node.clearTransmitBuffer();
   node.clearResponseBuffer();
   result = node.readHoldingRegisters(0x03E8, 7);  // read 7 registers starting at 0x03E8 (1000)
-  
+
   if (result != 0){
     // error occured
     evseVehicleStatus = 0;
@@ -616,16 +627,16 @@ bool ICACHE_FLASH_ATTR activateEVSE() {
   static uint16_t iTransmit;
   Serial.println("[ ModBus ] Query Modbus before activating EVSE");
   queryEVSE();
-  
+
   if (evseState == 3 &&
       evseVehicleStatus != 0){    //no modbus error occured
       iTransmit = 8192;         //disable EVSE after charge
-      
+
     uint8_t result;
     node.clearTransmitBuffer();
     node.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
     result = node.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-  
+
     if (result != 0){
       // error occured
       Serial.print("[ ModBus ] Error ");
@@ -659,11 +670,11 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
   //New ModBus Master Library
   static uint16_t iTransmit = 16384;  // deactivate evse
   uint8_t result;
-  
+
   node.clearTransmitBuffer();
   node.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
   result = node.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-  
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -674,7 +685,7 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
   else{
     // register successufully written
     Serial.println("[ ModBus ] EVSE successfully deactivated");
-   
+
     toDeactivateEVSE = false;
     evseActive = false;
     if(logUpdate){
@@ -687,11 +698,11 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
 bool ICACHE_FLASH_ATTR setEVSEcurrent(){  // telegram 1: write EVSE current
   //New ModBus Master Library
   uint8_t result;
-  
+
   node.clearTransmitBuffer();
   node.setTransmitBuffer(0, currentToSet); // set word 0 of TX buffer (bits 15..0)
   result = node.writeMultipleRegisters(0x03E8, 1);  // write register 0x03E8 (1000 - Actual configured amps value)
-  
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -699,7 +710,7 @@ bool ICACHE_FLASH_ATTR setEVSEcurrent(){  // telegram 1: write EVSE current
     Serial.println(" occured while setting current in EVSE - trying again...");
     return false;
   }
-  else{   
+  else{
     // register successufully written
     Serial.println("[ ModBus ] Current successfully set");
     evseAmpsConfig = currentToSet;  //foce update in WebUI
@@ -714,7 +725,7 @@ bool ICACHE_FLASH_ATTR setEVSERegister(uint16_t reg, uint16_t val){
   node.clearTransmitBuffer();
   node.setTransmitBuffer(0, val); // set word 0 of TX buffer (bits 15..0)
   result = node.writeMultipleRegisters(reg, 1);  // write given register
-  
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -722,7 +733,7 @@ bool ICACHE_FLASH_ATTR setEVSERegister(uint16_t reg, uint16_t val){
     Serial.println(" occured while setting EVSE Register " + (String)reg + " to " + (String)val);
     return false;
   }
-  else{   
+  else{
     // register successufully written
     Serial.println("[ ModBus ] Register " + (String)reg + " successfully set to " + (String)val);
     return true;
@@ -757,17 +768,17 @@ void ICACHE_FLASH_ATTR sendEVSEdata(){
     root["evse_current_limit"] = evseAmpsConfig;
     root["evse_current"] = String(currentKW, 1);
     root["evse_charging_time"] = getChargingTime();
-    root["evse_charged_kwh"] = String(meteredKWh, 2); 
+    root["evse_charged_kwh"] = String(meteredKWh, 2);
     root["evse_maximum_current"] = maxinstall;
     float f = roundf(10.334 * 100) / 100;
     if(meteredKWh == 0.0){
-      root["evse_charged_mileage"] = "0";  
+      root["evse_charged_mileage"] = "0";
     }
     else{
       root["evse_charged_mileage"] = String((meteredKWh * 100.0 / consumption), 0);
     }
     root["ap_mode"] = inAPMode;
-    
+
     size_t len = root.measureLength();
     AsyncWebSocketMessageBuffer * buffer = ws.makeBuffer(len);
     if (buffer) {
@@ -858,7 +869,7 @@ void ICACHE_FLASH_ATTR onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient *
         Serial.println(F("[ WARN ] Couldn't parse WebSocket message"));
         return;
       }
-      
+
       const char * command = root["command"];
       if (strcmp(command, "remove")  == 0) {
         const char* uid = root["uid"];
@@ -1105,7 +1116,7 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
     String sConsumption = json["avgconsumption"];
     consumption = strtof((sConsumption).c_str(),0);
   }
-  
+
   const char * l_hostname = json["hostnm"];
   free(deviceHostname);
   deviceHostname = strdup(l_hostname);
@@ -1118,7 +1129,7 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
     Serial.println("Error setting up MDNS responder!");
   }
   MDNS.addService("http", "tcp", 80);
-  
+
   timeZone = json["timezone"];
   kwhimp = json["kwhimp"];
   iPrice = json["price"];
@@ -1149,12 +1160,30 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
     return false;
   }
 
+//MQTT
+  if(json["MQTTactive"] == true){
+    useMQTT = true;
+  } else {
+    useMQTT = false;
+  }
+  if (wmode == 1 && useMQTT) {
+    Serial.print("[ DGL ] MQTT is only avaiable if SimpleEVSE WiFi is running in Client mode");
+  } else if (wmode == 0 && useMQTT)  {
+    Serial.print("[ INFO ] MQTT initialitation");
+    const char * mqtt_server = json["mqtt_server"];
+    const int mqtt_port = json["mqtt_port"];
+    const char * mqtt_user = json["mqtt_user"];
+    const char * mqtt_pw = json["mqtt_pw"];
+    const char * CFchargepoint_id = json["CFchargepoint_id"];
+//    return startMQTT(mqtt_server, mqtt_port, mqtt_user, mqtt_pw, CFchargepoint_id);
+  }
+
 //Check internet connection
   if(!Ping.ping("pool.ntp.org", 5)){
     Serial.println("[ NTP ] Error pinging pool.ntp.org - no NTP support!");
   }
-  else{ 
-    Serial.println("[ NTP ] Echo response received from pool.ntp.org - set up NTP"); 
+  else{
+    Serial.println("[ NTP ] Echo response received from pool.ntp.org - set up NTP");
     const char * ntpserver = "pool.ntp.org";
     IPAddress timeserverip;
     WiFi.hostByName(ntpserver, timeserverip);
@@ -1175,7 +1204,7 @@ void ICACHE_FLASH_ATTR setWebEvents(){
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
-  
+
   server.on("/fonts/glyph.woff", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncWebServerResponse * response = request->beginResponse_P(200, "font/woff", WEBSRC_GLYPH_WOFF, WEBSRC_GLYPH_WOFF_LEN);
     response->addHeader("Content-Encoding", "gzip");
@@ -1217,7 +1246,7 @@ void ICACHE_FLASH_ATTR setWebEvents(){
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
   });
-  
+
   //getParameters
   server.on("/getParameters", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -1237,13 +1266,13 @@ void ICACHE_FLASH_ATTR setWebEvents(){
     root.printTo(*response);
     request->send(response);
   });
-  
+
   //getLog
   server.on("/getLog", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/latestlog.json", "application/json");
     request->send(response);
   });
-  
+
   //setCurrent
   server.on("/setCurrent", HTTP_GET, [](AsyncWebServerRequest * request) {
     bool suc = false;
@@ -1270,7 +1299,7 @@ void ICACHE_FLASH_ATTR setWebEvents(){
       request->send(200, "text/plain", "E2_could not set current - wrong parameter");
     }
   });
-  
+
   //setStatus
   server.on("/setStatus", HTTP_GET, [](AsyncWebServerRequest * request) {
     bool suc = false;
@@ -1305,7 +1334,7 @@ void ICACHE_FLASH_ATTR setWebEvents(){
       request->send(200, "text/plain", "E2_could not process - wrong parameter");
     }
   });
-  
+
 }
 
 void ICACHE_FLASH_ATTR fallbacktoAPMode() {
@@ -1366,9 +1395,40 @@ void ICACHE_FLASH_ATTR startWebserver() {
       }
       request->send(200, "text/plain", "Success");
   });
-  
+
   server.rewrite("/", "/index.htm");
   server.begin();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+///////       MQTT section
+//////////////////////////////////////////////////////////////////////////////////////////
+
+bool ICACHE_FLASH_ATTR startMQTT(const char * mqtt_server, const int mqtt_port, const char * mqtt_user, const char * mqtt_pw, const char * CFchargepoint_id) {
+  client.setServer(mqtt_server, mqtt_port);
+  // Create a MQTT client ID, this is only for the Alpha Version later the mqtt_clientid will be used here
+  String clientId = "CFOnineMQTTClient-";
+  clientId += CFchargepoint_id;
+  client.connect(clientId.c_str(), mqtt_user, mqtt_pw);               //CFOnineMQTTClient
+  if (!client.connected()) {
+    Serial.print("[ ERROR ] MQTT didn't work, will wait 10sec and try again");
+    delay(10000);
+    client.connect(clientId.c_str(), mqtt_user, mqtt_pw);                    //CFOnineMQTTClient
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      // Later here further configuration will take place for different MQTT Server
+      // The CFchargepoint_id need to be done flexible as well.
+      client.publish("CFOS/2312/status", "Online 2312");                // xXx placeholder
+      // ... and resubscribe
+      client.subscribe("inTopic");                                     // xXx placeholder
+      return true;
+    } else {
+      Serial.print("[ ERROR ] MQTT didn't work out, rc=");
+      Serial.println(client.state());
+      return false;
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1379,11 +1439,11 @@ void ICACHE_FLASH_ATTR setup() {
   Serial.println();
   Serial.print("[ INFO ] SimpleEVSE WiFi");
   delay(2000);
-  
+
   SPIFFS.begin();
   node.begin(1, mySerial);
   mySerial.begin(9600);
-  
+
   if (!loadConfiguration()) {
     fallbacktoAPMode();
   }
@@ -1473,4 +1533,3 @@ void ICACHE_RAM_ATTR loop() {
     toSendStatus = false;
   }
 }
-
