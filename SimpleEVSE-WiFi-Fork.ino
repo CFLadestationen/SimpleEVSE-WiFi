@@ -114,13 +114,9 @@ uint16_t evseBootFirmware;   //Register 2009
 
 //Settings
 bool useRFID = false;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-bool useMeter = false;
 bool useMQTT = false;
-=======
 bool useSMeter = false;
 bool useMMeter = false;
->>>>>>> master:SimpleEVSE-WiFi.ino
 bool useButton = false;
 bool inAPMode = false;
 bool inFallbackMode = false;
@@ -166,12 +162,8 @@ void ICACHE_FLASH_ATTR parseBytes(const char* str, char sep, byte* bytes, int ma
 }
 
 void ICACHE_RAM_ATTR handleMeterInt() {  //interrupt routine for metering
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
   if(meterImpMillis < millis()){   //Meter impulse is 30ms
     meterInterrupt = true;
-=======
-  if(meterImpMillis < millis()){
->>>>>>> master:SimpleEVSE-WiFi.ino
     meterImpMillis = millis();
     meterInterrupt += 1;
     numberOfMeterImps ++;
@@ -369,17 +361,10 @@ void ICACHE_FLASH_ATTR sendStatus() {
 
   // Getting actual Modbus data
   queryEVSE();
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-  node.clearTransmitBuffer();
-  node.clearResponseBuffer();
-  result = node.readHoldingRegisters(0x07D0, 10);  // read 10 registers starting at 0x07D0 (2000)
-
-=======
   evseNode.clearTransmitBuffer();
   evseNode.clearResponseBuffer();
   result = evseNode.readHoldingRegisters(0x07D0, 10);  // read 10 registers starting at 0x07D0 (2000)
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (result != 0){
     // error occured
     evseVehicleStatus = 0;
@@ -406,13 +391,8 @@ void ICACHE_FLASH_ATTR sendStatus() {
       case 2:
         evseAmpsMin = evseNode.getResponseBuffer(i);           //Register 2002
         break;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
       case 3:
-        evseAnIn = node.getResponseBuffer(i);             //Reg 2003
-=======
-      case 3: 
         evseAnIn = evseNode.getResponseBuffer(i);             //Reg 2003
->>>>>>> master:SimpleEVSE-WiFi.ino
         break;
       case 4:
         evseAmpsPowerOn = evseNode.getResponseBuffer(i);      //Reg 2004
@@ -427,13 +407,8 @@ void ICACHE_FLASH_ATTR sendStatus() {
         evsePpDetection = evseNode.getResponseBuffer(i);       //Register 2007
         break;
       case 9:
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-        evseBootFirmware = node.getResponseBuffer(i);       //Register 2009
-        break;
-=======
         evseBootFirmware = evseNode.getResponseBuffer(i);       //Register 2009
-        break;    
->>>>>>> master:SimpleEVSE-WiFi.ino
+        break;
       }
     }
   }
@@ -453,14 +428,10 @@ void ICACHE_FLASH_ATTR sendStatus() {
   root["evse_2005"] = evseReg2005;                  //Reg 2005
   root["evse_sharing_mode"] = evseShareMode;        //Reg 2006
   root["evse_pp_detection"] = evsePpDetection;      //Reg 2007
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-
-=======
   if (useMMeter){
     delay(30);
     root["meter_total"] = readMeter(0x0156);
   }
->>>>>>> master:SimpleEVSE-WiFi.ino
   size_t len = root.measureLength();
   AsyncWebSocketMessageBuffer * buffer = ws.makeBuffer(len); //  creates a buffer (len + 1) for you.
   if (buffer) {
@@ -592,7 +563,7 @@ float ICACHE_FLASH_ATTR readMeter(uint16_t reg){
   uint8_t result;
   uint16_t iaRes[2];
   float fResponse;
-  
+
   meterNode.clearTransmitBuffer();
   meterNode.clearResponseBuffer();
   delay(50);
@@ -620,19 +591,11 @@ float ICACHE_FLASH_ATTR readMeter(uint16_t reg){
 //////////////////////////////////////////////////////////////////////////////////////////
 bool ICACHE_FLASH_ATTR queryEVSE(){
   uint8_t result;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
 
-  node.clearTransmitBuffer();
-  node.clearResponseBuffer();
-  result = node.readHoldingRegisters(0x03E8, 7);  // read 7 registers starting at 0x03E8 (1000)
-
-=======
-  
   evseNode.clearTransmitBuffer();
   evseNode.clearResponseBuffer();
   result = evseNode.readHoldingRegisters(0x03E8, 7);  // read 7 registers starting at 0x03E8 (1000)
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (result != 0){
 
     evseVehicleStatus = 0;
@@ -721,17 +684,10 @@ bool ICACHE_FLASH_ATTR activateEVSE() {
       iTransmit = 8192;         //disable EVSE after charge
 
     uint8_t result;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-    node.clearTransmitBuffer();
-    node.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
-    result = node.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-
-=======
     evseNode.clearTransmitBuffer();
     evseNode.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
     result = evseNode.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
     if (result != 0){
       // error occured
       Serial.print("[ ModBus ] Error ");
@@ -751,7 +707,7 @@ bool ICACHE_FLASH_ATTR activateEVSE() {
         startTotal = readMeter(0x0156);
       }
       else{
-        meteredKWh = 0.0;  
+        meteredKWh = 0.0;
       }
       numberOfMeterImps = 0;
       millisStartCharging = millis();
@@ -772,19 +728,11 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
   //New ModBus Master Library
   static uint16_t iTransmit = 16384;  // deactivate evse
   uint8_t result;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
 
-  node.clearTransmitBuffer();
-  node.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
-  result = node.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-
-=======
-  
   evseNode.clearTransmitBuffer();
   evseNode.setTransmitBuffer(0, iTransmit); // set word 0 of TX buffer (bits 15..0)
   result = evseNode.writeMultipleRegisters(0x07D5, 1);  // write register 0x07D5 (2005)
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -796,12 +744,9 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
     // register successufully written
     Serial.println("[ ModBus ] EVSE successfully deactivated");
 
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-=======
     if(useMMeter){
       meteredKWh = readMeter(0x0156) - startTotal;
     }
->>>>>>> master:SimpleEVSE-WiFi.ino
     toDeactivateEVSE = false;
     evseActive = false;
     if(logUpdate){
@@ -815,19 +760,11 @@ bool ICACHE_FLASH_ATTR deactivateEVSE(bool logUpdate) {
 bool ICACHE_FLASH_ATTR setEVSEcurrent(){  // telegram 1: write EVSE current
   //New ModBus Master Library
   uint8_t result;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
 
-  node.clearTransmitBuffer();
-  node.setTransmitBuffer(0, currentToSet); // set word 0 of TX buffer (bits 15..0)
-  result = node.writeMultipleRegisters(0x03E8, 1);  // write register 0x03E8 (1000 - Actual configured amps value)
-
-=======
-  
   evseNode.clearTransmitBuffer();
   evseNode.setTransmitBuffer(0, currentToSet); // set word 0 of TX buffer (bits 15..0)
   result = evseNode.writeMultipleRegisters(0x03E8, 1);  // write register 0x03E8 (1000 - Actual configured amps value)
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -847,17 +784,10 @@ bool ICACHE_FLASH_ATTR setEVSEcurrent(){  // telegram 1: write EVSE current
 
 bool ICACHE_FLASH_ATTR setEVSERegister(uint16_t reg, uint16_t val){
   uint8_t result;
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-  node.clearTransmitBuffer();
-  node.setTransmitBuffer(0, val); // set word 0 of TX buffer (bits 15..0)
-  result = node.writeMultipleRegisters(reg, 1);  // write given register
-
-=======
   evseNode.clearTransmitBuffer();
   evseNode.setTransmitBuffer(0, val); // set word 0 of TX buffer (bits 15..0)
   result = evseNode.writeMultipleRegisters(reg, 1);  // write given register
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (result != 0){
     // error occured
     Serial.print("[ ModBus ] Error ");
@@ -903,11 +833,7 @@ void ICACHE_FLASH_ATTR sendEVSEdata(){
     root["evse_charged_kwh"] = String(meteredKWh, 2);
     root["evse_maximum_current"] = maxinstall;
     if(meteredKWh == 0.0){
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-      root["evse_charged_mileage"] = "0";
-=======
-      root["evse_charged_mileage"] = "0.0";  
->>>>>>> master:SimpleEVSE-WiFi.ino
+      root["evse_charged_mileage"] = "0.0";
     }
     else{
       root["evse_charged_mileage"] = String((meteredKWh * 100.0 / consumption), 1);
@@ -1272,7 +1198,7 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
   const char * l_hostname = json["hostnm"];
   free(deviceHostname);
   deviceHostname = strdup(l_hostname);
-  
+
   const char * bssidmac = json["bssid"];
   byte bssid[6];
   parseBytes(bssidmac, ':', bssid, 6, 16);
@@ -1283,16 +1209,10 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
   }
   MDNS.addService("http", "tcp", 80);
 
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-  timeZone = json["timezone"];
-  kwhimp = json["kwhimp"];
-  iPrice = json["price"];
-=======
   if(json.containsKey("timezone")){
     timeZone = json["timezone"];
   }
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   iFactor = json["factor"];
   maxinstall = json["maxinstall"];
 
@@ -1320,7 +1240,6 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
     return false;
   }
 
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
 //MQTT
   if(json["MQTTactive"] == true){
     useMQTT = true;
@@ -1339,7 +1258,6 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
 //    return startMQTT(mqtt_server, mqtt_port, mqtt_user, mqtt_pw, CFchargepoint_id);
   }
 
-=======
   if(json.containsKey("staticip") &&
       json.containsKey("ip") &&
       json.containsKey("subnet") &&
@@ -1360,7 +1278,7 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
       subnet.fromString(subnetch);
       gateway.fromString(gatewaych);
       dns.fromString(dnsch);
-      
+
       WiFi.config(clientip, gateway, subnet, dns);
     }
   }
@@ -1369,7 +1287,6 @@ bool ICACHE_FLASH_ATTR loadConfiguration() {
   Serial.print(F("[ INFO ] Client IP address: "));
   Serial.println(WiFi.localIP());
 
->>>>>>> master:SimpleEVSE-WiFi.ino
 //Check internet connection
   delay(100);
   if(!Ping.ping("google.com", 5)){
@@ -1440,13 +1357,10 @@ void ICACHE_FLASH_ATTR setWebEvents(){
     request->send(response);
   });
 
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-=======
     //
     //  HTTP API
     //
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   //getParameters
   server.on("/getParameters", HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -1640,22 +1554,13 @@ void ICACHE_FLASH_ATTR setup() {
   Serial.begin(9600);
   Serial.println();
   Serial.print("[ INFO ] SimpleEVSE WiFi");
-<<<<<<< HEAD:SimpleEVSE-WiFi-Fork.ino
-  delay(2000);
-
-  SPIFFS.begin();
-  node.begin(1, mySerial);
-  mySerial.begin(9600);
-
-=======
   delay(1000);
-  
+
   SPIFFS.begin();
   sSerial.begin(9600);
   evseNode.begin(1, sSerial);
   meterNode.begin(2, Serial);
-  
->>>>>>> master:SimpleEVSE-WiFi.ino
+
   if (!loadConfiguration()) {
     fallbacktoAPMode();
   }
@@ -1687,7 +1592,7 @@ void ICACHE_RAM_ATTR loop() {
   unsigned long deltaTime = currentMillis - previousLoopMillis;
   unsigned long uptime = NTP.getUptimeSec();
   previousLoopMillis = currentMillis;
-  
+
 
   if (uptime > 604800000) {   // auto restart after 7 days
     if(vehicleCharging == false){

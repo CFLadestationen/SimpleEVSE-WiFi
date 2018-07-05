@@ -127,13 +127,13 @@
 	<div class="hidden" id="carStatusCharging" align=center>
 		<img id="statusImg" src="/status_charging.svg">
 	</div>
-	
+
 	<div>
 		<br>
 		<p id="evse_vehicle_state" class="text-center"></p>
 		<br>
 	</div>
-    
+
 		<div class="panel panel-default table-responsive">
           <table class="table table-hover" >
             <tbody style="transition:0.5s">
@@ -526,8 +526,8 @@
                   </tr>
                 </table>
               </div>
-            </div>			
-			
+            </div>
+
           </div>
             <br>
         <div class="row">
@@ -577,25 +577,25 @@
               </div>
             </div>
 			<div id="divIP" class="row form-group">
-				<label data-toggle="tooltip" title="Give an IP Address" class="col-xs-3">IP Address</label> 
+				<label data-toggle="tooltip" title="Give an IP Address" class="col-xs-3">IP Address</label>
  				<span class="col-xs-9 col-md-5">
 				<input class="form-control input-sm" placeholder="IP Address" id="ipch" type="text" name="ip">
  				</span>
 			</div>
 			<div id="divSubnet" class="row form-group">
-				<label data-toggle="tooltip" title="Give a Subnet Mask" class="col-xs-3">Subnet Mask</label> 
+				<label data-toggle="tooltip" title="Give a Subnet Mask" class="col-xs-3">Subnet Mask</label>
  				<span class="col-xs-9 col-md-5">
 				<input class="form-control input-sm" placeholder="Subnet Mask" id="subnetch" type="text" name="subnet">
  				</span>
 			</div>
 			<div id="divGateway" class="row form-group">
-				<label data-toggle="tooltip" title="Give a Gateway" class="col-xs-3">Gateway</label> 
+				<label data-toggle="tooltip" title="Give a Gateway" class="col-xs-3">Gateway</label>
  				<span class="col-xs-9 col-md-5">
 				<input class="form-control input-sm" placeholder="Gateway" id="gatewaych" type="text" name="gateway">
  				</span>
 			</div>
 			<div id="divDNS" class="row form-group">
-				<label data-toggle="tooltip" title="Give a DNS Server" class="col-xs-3">DNS Server</label> 
+				<label data-toggle="tooltip" title="Give a DNS Server" class="col-xs-3">DNS Server</label>
  				<span class="col-xs-9 col-md-5">
 				<input class="form-control input-sm" placeholder="DNS Server" id="dnsch" type="text" name="dns">
  				</span>
@@ -655,10 +655,7 @@
               </div>
             </div>
 			<div class="row form-group">
-<<<<<<< HEAD
-              <label data-toggle="tooltip" title="Choose which ESP port is connected to S0 interface of electricity meter" class="col-xs-3">Meter GPIO</label>
-=======
-              <label data-toggle="tooltip" title="Choose whether you want to use an s0 meter or a modbus meter." class="col-xs-3">Type of Meter</label> 
+              <label data-toggle="tooltip" title="Choose whether you want to use an s0 meter or a modbus meter." class="col-xs-3">Type of Meter</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="smetertype" onchange="handleMeterType()">
                   <option selected value="m">Modbus Meter (experimental)</option>
@@ -667,8 +664,7 @@
               </span>
             </div>
 			<div id="divMeterPin" class="row form-group">
-              <label data-toggle="tooltip" title="Choose which ESP port is connected to S0 interface of electricity meter" class="col-xs-3">Meter GPIO</label> 
->>>>>>> master
+              <label data-toggle="tooltip" title="Choose which ESP port is connected to S0 interface of electricity meter" class="col-xs-3">Meter GPIO</label>
               <span class="col-xs-9 col-md-5">
                 <select class="form-control input-sm" id="gpioint">
                   <option selected="selected" value="0">GPIO-0</option>
@@ -679,19 +675,14 @@
                 </select>
               </span>
             </div>
-<<<<<<< HEAD
-            <div class="row form-group">
- 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulses per kWh (usually 1000 or 2000 imp/kWh)" class="col-xs-3">Meter Type</label>
-=======
             <div id="divImpKwh" class="row form-group">
- 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulses per kWh (usually 1000 or 2000 imp/kWh)" class="col-xs-3">Impulses</label> 
->>>>>>> master
+ 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulses per kWh (usually 1000 or 2000 imp/kWh)" class="col-xs-3">Impulses</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="1000" placeholder="impulses per kWh" id="impkwh" type="text" name="impsperkwh">
  						</span>
 			</div>
             <div id="divImpLen" class="row form-group">
- 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulse length in milliseconds (for SDM120 use 90). Default: 30ms" class="col-xs-3">Impulse Length</label> 
+ 						<label data-toggle="tooltip" title="Depending on your meter setup, you can choose the impulse length in milliseconds (for SDM120 use 90). Default: 30ms" class="col-xs-3">Impulse Length</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" placeholder="impulse length in ms" id="implen" type="text" name="implength">
  						</span>
@@ -713,11 +704,7 @@
 		  <div class="col-sm-6">
 			<legend>EVSE Settings</legend>
             <div class="row form-group">
-<<<<<<< HEAD
- 						<label data-toggle="tooltip" title="Enter the maximum current (A) allowed by your electical installation." class="col-xs-3">Max Current</label>
-=======
- 						<label data-toggle="tooltip" title="Enter the maximum current (A) allowed by your electical installation to limit the slider in /'EVSE Control/'." class="col-xs-3">Max Current</label> 
->>>>>>> master
+ 						<label data-toggle="tooltip" title="Enter the maximum current (A) allowed by your electical installation to limit the slider in /'EVSE Control/'." class="col-xs-3">Max Current</label>
  						<span class="col-xs-9 col-md-5">
 						<input class="form-control input-sm" value="6" placeholder="Ampere" id="maxinstall" type="text" name="maxinstall">
  						</span>
