@@ -1,7 +1,10 @@
 # SimpleEVSE-WiFi
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/pools/c/85c7xRbeay)
 
 SimpleEVSE-WiFi brings WiFi functionality to your SimpleEVSE WB to control your Charging Station very easy. It uses an ESP8266 to communicate with SimpleEVSE WB via ModBus (UART) and offers a web interface to control it. Optional there is a possibility to connect an impulse meter via S0 and an RC522 RFID reader to detect valid RFID tags.
+
+If you want to support this project, I would be very happy about a donation.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/pools/c/85c7xRbeay)
 
 ## Main Features
 
@@ -58,11 +61,26 @@ ESP8266-Pin | ESP8266-GPIO | Button
 D4 | GPIO2 | Pin 1
 GND | | Pin 2
 
-##### Electicity Meter (optional)*
+##### S0 Electicity Meter (optional)*
 ESP8266-Pin | ESP8266-GPIO | electricity meter
 ----------- | ----------- | -----------
 D3 | GPIO0 | S0+
 GND | | S0-
+
+##### Modbus Electicity Meter (optional - experimental!)**
+TTL->RS485 | ESP8266-Pin
+----------- | -----------
+RX | RX 
+TX | TX 
+VCC | 5V
+GND | GND
+
+TTL->RS485 | Modbus Meter 
+----------- | -----------
+A+ | A
+B- | B
+
+
 
 ##### RC522 RFID-Reader (optional)
 ESP8266-Pin | ESP8266-GPIO | RC522
@@ -74,9 +92,11 @@ D8 | GPIO15 | SDA
 GND |  | GND
 3.3V |  | 3.3V
 
-Be sure to use a suitable power supply for ESP. At least 200mA is recommended!
+Be sure to use a suitable power supply for ESP. At least 500mA is recommended!
 
-*When you use an electricity meter be sure the S0 interface switches to GND, don't use 3.3V or 5V!
+\*When you use an electricity meter with S0 interface be sure the S0 interface switches to GND, don't use 3.3V or 5V!
+
+\*\*To use a Modbus electricity meter via RS485, you need a extra piece of hardware to translate UART to RS485. In this project a PCB like [this](https://www.amazon.de/WINGONEER-RS485-Adapter-Serieller-Converter/dp/B06XHH6B6R/ref=sr_1_1?ie=UTF8&qid=1530052971&sr=8-1&keywords=rs485+uart) is required. Set your meter to baud rate 9600 and slave ID to "002".
 
 #### Preparation of EVSE Wallbox
 To use SimpleEVSE-WiFi, the Modbus functionallity of EVSE Wallbox is needed! By default, Modbus functionality is disabled. To activate it, pull AN input of the EVSE Wallbox board to GND while booting for at least 5 times within 3 seconds. Modbus register 2001 will be set to 1 (Modbus is active). Attention: That change will not be saved! To save the settings, you have to give a R/W operation at a register >=2000. The easiest way to do this is to activate and deactivate EVSE through the WebUI in the "EVSE Control" page.
@@ -113,6 +133,9 @@ Unlisted libraries are part of [ESP8266](https://github.com/esp8266/Arduino) Cor
 ## First boot
 When SimpleEVSE-WiFi starts for the first time it sets up a WiFi access point called 'evse-wifi'. You can connect without a password. To connect, open http://192.168.4.1 in your browser. The initial password is 'admin'. You should first check the Settings to bring the ESP in Client mode and connect it to your local WiFi network. The ESP will be restarted afterwards. If it doesn't restart, press the 'RST' button once. Sometimes the ESP must first be manually reset (this only has to happen after flashing a new firmware).
 
+## Support this Project
+The development of SimpleEVSE-WiFi is very time consuming. If you want to support this project, I would be very happy about a [donation](https://www.paypal.com/pools/c/85c7xRbeay).
+
 ## HTTP API
 Since version 0.2.0 there is an HTTP API implemented to let other devices control your EVSE WiFi. The API gives you the following possibilities of setting and fetching information.
 
@@ -127,6 +150,7 @@ actualCurrent | Actual configured current in A (e.g. 20A)
 actualPower | actual power consumption (when S0 meter is used)
 duration | charging duration in milliseconds
 energy | charged energy of the current charging process in kWh
+mileage | charged energy in km
 
 #### Example
 `GET http://192.168.4.1/getParameters`
@@ -142,7 +166,8 @@ energy | charged energy of the current charging process in kWh
     "actualCurrent": 32,
     "actualPower": 5.79,
     "duration": 1821561,
-    "energy": "9.52"
+    "energy": 9.52,
+    "mileage": 82.3
   }]
 }
 ```
@@ -172,14 +197,14 @@ price | Defined price per kWh in cent
     "username": "GUI",
     "timestamp": 1523295915,
     "duration": 7504266,
-    "energy": "10.32",
+    "energy": 10.32,
     "price": 21
   }, {
     "uid": "-",
     "username": "GUI",
     "timestamp": 1523568920,
     "duration": 1152251,
-    "energy": "2.17",
+    "energy": 2.17,
     "price": 23
   }]
 }
