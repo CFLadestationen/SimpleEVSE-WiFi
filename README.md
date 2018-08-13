@@ -269,6 +269,3 @@ E1_could not process - give a valid value (true/false) | Wrong value was given
 E2_could not process - wrong parameter | Wrong parameter was given
 E3_could not activate EVSE - EVSE already activated! | EVSE is already in state "active"
 E3_could not deactivate EVSE - EVSE already deactivated! | EVSE is already in state "deactive"
-
-
-
