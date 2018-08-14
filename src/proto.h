@@ -33,4 +33,4 @@ void   ICACHE_FLASH_ATTR setup();
 bool   ICACHE_FLASH_ATTR setEVSERegister(uint16_t reg, uint16_t val);
 float  ICACHE_FLASH_ATTR readMeter(uint16_t reg);
 void   ICACHE_FLASH_ATTR updateMMeterData();
-void   ICACHE_FLASH_ATTR updateMMeterCurrent(); 
+void   ICACHE_FLASH_ATTR updateMMeterCurrent();
