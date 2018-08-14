@@ -70,12 +70,12 @@ GND | | S0-
 ##### Modbus Electicity Meter (optional - experimental!)**
 TTL->RS485 | ESP8266-Pin
 ----------- | -----------
-RX | RX 
-TX | TX 
+RX | RX
+TX | TX
 VCC | 5V
 GND | GND
 
-TTL->RS485 | Modbus Meter 
+TTL->RS485 | Modbus Meter
 ----------- | -----------
 A+ | A
 B- | B
@@ -258,6 +258,3 @@ E0_could not activate EVSE - internal error | Internal error occured (unspecifie
 E0_could not deactivate EVSE - internal error | Internal error occured (unspecified)
 E1_could not process - give a valid value (true/false) | Wrong value was given
 E2_could not process - wrong parameter | Wrong parameter was given
-
-
-
